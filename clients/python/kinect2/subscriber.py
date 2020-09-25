@@ -53,6 +53,7 @@ class StreamSubscriber(object):
         msg = self.params.send_params()
         # Start the client
         self._start_client()
+        print("msg",msg)
         return msg
    
     def stop(self):
@@ -79,8 +80,8 @@ class SkeletonSubscriber(object):
         self._socket_skel = self._context.socket(SUB)
         self._socket_face = self._context.socket(SUB)
 
-        self._socket_face.setsockopt(SUBSCRIBE, "face")
-        self._socket_skel.setsockopt(SUBSCRIBE, "skeleton")
+        self._socket_face.setsockopt(SUBSCRIBE, b"face")
+        self._socket_skel.setsockopt(SUBSCRIBE, b"skeleton")
 
         self._socket_face.setsockopt(CONFLATE, 1)
         self._socket_skel.setsockopt(CONFLATE, 1)
@@ -95,6 +96,7 @@ class SkeletonSubscriber(object):
             if e.errno == EAGAIN:
                 return None
         else:
+            msg = msg.decode("utf-8") 
             str_msg = " ".join(msg.split(' ')[1:])
             return json.loads(str_msg)
 
@@ -105,6 +107,7 @@ class SkeletonSubscriber(object):
             if e.errno == EAGAIN:
                 return None
         else:
+            msg = msg.decode("utf-8") 
             str_msg = " ".join(msg.split(' ')[1:])
             return json.loads(str_msg)     
 
@@ -133,7 +136,10 @@ class SkeletonSubscriber(object):
             msg_face = self._get_face()
             
             if callable(self._cb) and msg_skel is not None and msg_face is not None:
-                self._cb({msg_skel, msg_face})
+                print("skeleton: ", msg_skel)
+                # print("msg face: ", msg_face)
+                self._cb(msg_skel)
+                # self._cb({msg_skel, msg_face})
 
     def start(self):
         """
@@ -154,9 +160,9 @@ class RGBDSubscriber(object):
         self._socket_color = self._context.socket(SUB)
         self._socket_mapping = self._context.socket(SUB)
         self._socket_mask = self._context.socket(SUB)
-        self._socket_color.setsockopt(SUBSCRIBE, "")
-        self._socket_mapping.setsockopt(SUBSCRIBE, "")
-        self._socket_mask.setsockopt(SUBSCRIBE, "")
+        self._socket_color.setsockopt(SUBSCRIBE, b"")
+        self._socket_mapping.setsockopt(SUBSCRIBE, b"")
+        self._socket_mask.setsockopt(SUBSCRIBE, b"")
         self._socket_color.setsockopt(CONFLATE, 1)
         self._socket_mapping.setsockopt(CONFLATE, 1)
         self._socket_mask.setsockopt(CONFLATE, 1)
@@ -205,8 +211,9 @@ class RGBDSubscriber(object):
     def _transform_msg_into_cv2images(self, msg_color, msg_mapping, msg_mask, inpaint):
 
         rgb_frame_numpy = numpy.fromstring(msg_color, numpy.uint8).reshape(1080, 1920,2)
+        print("rgb from numpy", rgb_frame_numpy)
         frame_rgb = cv2.cvtColor(rgb_frame_numpy, cv2.COLOR_YUV2BGR_YUY2)  # YUY2 to BGR
-        mapped_frame_numpy = numpy.fromstring(msg_mapping, numpy.uint8).reshape(1080*self._factor, 1920*self._factor)
+        mapped_frame_numpy = numpy.fromstring(msg_mapping, numpy.uint8).reshape(int(1080*self._factor), int(1920*self._factor))
         mapped_image = numpy.uint8(cv2.normalize(mapped_frame_numpy, None, 0, 255, cv2.NORM_MINMAX))
         mask_numpy = numpy.fromstring(msg_mask, numpy.uint8).reshape(1080*self._factor, 1920*self._factor)
         mask = numpy.uint8(cv2.normalize(mask_numpy, None, 0, 255, cv2.NORM_MINMAX))
@@ -291,11 +298,11 @@ class RGBDSubscriber(object):
 
 class SpeechSubscriber(StreamSubscriber):
     def __init__(self, context, ip, port, config_port):
-        StreamSubscriber.__init__(self, context, 'recognized_speech', ip, port)
+        StreamSubscriber.__init__(self, context, b'recognized_speech', ip, port)
         self.params = SpeechParams(context, ip, config_port)
    
 
 class MicrophoneSubscriber(StreamSubscriber):
     def __init__(self, context, ip, port, config_port):
-        StreamSubscriber.__init__(self, context, '', ip, port, conflate = False)
+        StreamSubscriber.__init__(self, context, b'', ip, port, conflate = False)
         self.params = MicParams(context, ip, config_port)

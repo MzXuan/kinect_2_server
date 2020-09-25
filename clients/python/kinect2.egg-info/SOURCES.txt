@@ -1,0 +1,5 @@
+setup.py
+kinect2.egg-info/PKG-INFO
+kinect2.egg-info/SOURCES.txt
+kinect2.egg-info/dependency_links.txt
+kinect2.egg-info/top_level.txt

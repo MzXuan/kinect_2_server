@@ -21,7 +21,7 @@ class Params(object):
         Returns an empty string if the parameters have been set successfully on the server or an error string otherwise
         """
         json_str = json.dumps({self._feature: self._params})
-        self._socket.send(json_str)
+        self._socket.send(json_str.encode())
         message = self._socket.recv()
         return message
 

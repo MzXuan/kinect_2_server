@@ -8,7 +8,7 @@ class TTSRequester(object):
     def __init__(self, context, ip, port, config_port):
         self._context = context
         self._socket = self._context.socket(DEALER)
-        self._socket.identity = "client"
+        self._socket.identity = b"client"
         self._socket.connect('tcp://{}:{}'.format(ip, port))
         self._msg_id = 0
         self.params = TextToSpeechParams(context, ip, config_port)
